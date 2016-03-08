@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/ng-wei/tiny-scheme.svg?branch=master)](https://travis-ci.org/ng-wei/tiny-scheme)
 # tiny-scheme
 
 no description    
