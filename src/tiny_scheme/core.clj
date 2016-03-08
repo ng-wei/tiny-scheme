@@ -31,8 +31,8 @@
   [params values env]
   (cond
    (not= (count params) (count values)) (throw (Exception. "arguments number unexcepted!"))
-   :else (doseq [[p v] (map list params values)]
-           (put! env p v))))
+   :else (into env (for [[p v] (map list params values)]
+                     {p v}))))
 
 
 ;; An example:
@@ -148,7 +148,7 @@
 (defn user-function?
   [expr]
   (tagged-list?
-   (get-user-function-object expr global-env)
+   expr
    'function))
 
 (defn function?
@@ -253,19 +253,24 @@
 (defn eval-expressions
   [exprs env]
   (cond
-   (last-expression? exprs) (eval1 (first-expression exprs) env)
+   (last-expression? exprs) (do (prn (first-expression exprs) env)
+                                (eval1 (first-expression exprs) env)) 
    :else (do (eval1 (first-expression exprs) env)
              (eval-expressions (rest-expression exprs) env))))
+
+(defn eval-arguments
+  [arguments env]
+  (map #(eval1 %1 env) arguments))
 
 (defn apply1
   [fn-object fn-args]
   (cond
    (built-in-function? fn-object) (apply (get-built-in-procedure fn-object) fn-args)
-   (user-function? fn-object) (let [[_ fn-params fn-body] (vec fn-object)]
-                                        (eval-expressions fn-body
+   (user-function? fn-object) (let [[_ fn-params fn-body env] (vec fn-object)]
+                                (eval-expressions fn-body
                                                   (extend-environment fn-params
                                                                       fn-args
-                                                                      (get-user-function-env fn-object))))
+                                                                      env)))
    (is-keyword? fn-object) (apply (get-keyword-procedure fn-object) fn-args)
    :else (throw (Exception. "Unknow type function -- APPLY1"))))
 
@@ -287,12 +292,12 @@
                               'ok)
    ;; define function
    (user-function-defined? expr) (let [[_ [fn-name & fn-params] & fn-body] (vec expr)]
-                                   (put! env fn-name (make-user-function fn-params fn-body env))
+                                   (put! env fn-name (make-user-function fn-params fn-body (immutable! env)))
                                    'ok)
    ;; call function
   (function-called? expr) (let [[fn-name & fn-args] (vec expr)
-                                fn-object (get env fn-name)]
-                            (apply1 fn-object fn-args))
+                                fn-object (eval1 fn-name (immutable! env))]
+                            (apply1 fn-object (eval-arguments fn-args (immutable! env))))
   :else (throw (Exception. "Unknow eval type"))))
 
 (defn repl

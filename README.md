@@ -35,6 +35,10 @@ no description
     5
 
     ;; function 
+    tiny-scheme.core >> (define (f x y) (+ x y))
+    ok
+    tiny-scheme.core >> (f 1 2)
+    3
 
     ;; pair
 
