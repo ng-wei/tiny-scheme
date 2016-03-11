@@ -253,8 +253,7 @@
 (defn eval-expressions
   [exprs env]
   (cond
-   (last-expression? exprs) (do (prn (first-expression exprs) env)
-                                (eval1 (first-expression exprs) env)) 
+   (last-expression? exprs) (eval1 (first-expression exprs) env) 
    :else (do (eval1 (first-expression exprs) env)
              (eval-expressions (rest-expression exprs) env))))
 
